@@ -3,335 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StockPulse | Premium Stock Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="StockPulse - Real-time stock price visualization with interactive charts for Indian and global stocks.">
+    <title>StockPulse | Stock Price Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent-color: #10b981;
-            --accent-blue: #3b82f6;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg:           #0b1120;
+            --surface:      rgba(22, 33, 55, 0.85);
+            --surface-2:    rgba(30, 45, 70, 0.6);
+            --border:       rgba(255, 255, 255, 0.08);
+            --green:        #10b981;
+            --green-dim:    rgba(16, 185, 129, 0.15);
+            --red:          #ef4444;
+            --red-dim:      rgba(239, 68, 68, 0.15);
+            --blue:         #3b82f6;
+            --text:         #f1f5f9;
+            --muted:        #64748b;
+            --subtle:       #94a3b8;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 80% -10%, rgba(16,185,129,0.12), transparent),
+                radial-gradient(ellipse 60% 40% at 10% 90%,  rgba(59,130,246,0.10), transparent);
+        }
+
+        /* ── HEADER ─────────────────────────────────── */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2rem;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent),
-                              radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent);
-            padding: 2rem 0;
+            gap: 0.75rem;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11, 17, 32, 0.8);
         }
 
-        .container {
-            width: 90%;
-            max-width: 800px;
-            text-align: center;
-            z-index: 10;
-        }
-
-        h1 {
-            font-size: 3rem;
+        .logo {
+            font-size: 1.5rem;
             font-weight: 800;
-            margin-bottom: 2rem;
-            background: linear-gradient(to right, #10b981, #3b82f6);
+            background: linear-gradient(90deg, var(--green), var(--blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.05em;
+            letter-spacing: -0.04em;
+        }
+
+        .logo-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(16,185,129,0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            letter-spacing: 0.08em;
+        }
+
+        /* ── MAIN LAYOUT ─────────────────────────────── */
+        main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+
+        .hero-text {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-text h1 span {
+            background: linear-gradient(90deg, var(--green), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            color: var(--subtle);
+            font-size: 1.05rem;
+        }
+
+        /* ── SEARCH ──────────────────────────────────── */
+        .search-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            margin-bottom: 2rem;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 0.75rem;
         }
 
         .search-wrapper {
             position: relative;
-            margin-bottom: 2rem;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+            flex: 1;
         }
 
-        .search-box {
+        .search-icon {
+            position: absolute;
+            left: 1.1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        #stockInput {
             width: 100%;
-            padding: 1.2rem 1.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            color: white;
-            font-size: 1.1rem;
+            padding: 0.95rem 1rem 0.95rem 2.8rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--text);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
             outline: none;
-            backdrop-filter: blur(12px);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .search-box:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+        #stockInput:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
+
+        #stockInput::placeholder { color: var(--muted); }
 
         .suggestions-dropdown {
             position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: #1e293b;
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 50;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: #1a2540;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            z-index: 200;
             display: none;
-            text-align: left;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
         }
 
         .suggestion-item {
-            padding: 0.8rem 1.5rem;
+            padding: 0.75rem 1.1rem;
             cursor: pointer;
-            transition: background 0.2s;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s;
         }
 
-        .suggestion-item:last-child {
-            border-bottom: none;
+        .suggestion-item:last-child { border-bottom: none; }
+
+        .suggestion-item::before {
+            content: '📈';
+            font-size: 0.85rem;
         }
 
         .suggestion-item:hover {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent-color);
+            background: var(--green-dim);
+            color: var(--green);
         }
 
         .search-btn {
-            margin-top: 1rem;
-            padding: 1rem 2rem;
+            padding: 0.95rem 1.8rem;
             background: linear-gradient(135deg, #10b981, #059669);
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: 100%;
-            max-width: 500px;
+            transition: transform 0.18s, box-shadow 0.18s;
+            white-space: nowrap;
         }
 
         .search-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
         }
 
-        .result-card {
-            margin-top: 2.5rem;
-            padding: 2.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 32px;
-            backdrop-filter: blur(12px);
-            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            text-align: left;
+        .search-btn:active { transform: translateY(0); }
+
+        /* ── ERROR BANNER ────────────────────────────── */
+        .error-banner {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--red-dim);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            color: #fca5a5;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.4s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .error-icon { font-size: 1.2rem; }
+
+        /* ── STATS ROW ───────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .card-header {
+        .stat-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.1rem 1.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── CHART CARD ──────────────────────────────── */
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+            animation: fadeIn 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+
+        .chart-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
-        .symbol-tag {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            color: var(--text-secondary);
+        .stock-name {
+            font-size: 0.8rem;
             font-weight: 700;
             letter-spacing: 0.1em;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.4rem 0.8rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            display: inline-block;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
         }
 
-        .current-price {
-            font-size: 3.5rem;
+        .stock-price {
+            font-size: 2.8rem;
             font-weight: 800;
-            color: var(--text-primary);
+            letter-spacing: -0.04em;
             line-height: 1;
+            color: var(--text);
         }
 
-        .chart-container {
-            width: 100%;
-            height: 350px;
-            margin-top: 1rem;
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            margin-top: 0.5rem;
         }
 
-        .error-msg {
-            color: #ef4444;
-            font-weight: 500;
-            text-align: center;
+        .price-change.up   { background: var(--green-dim); color: var(--green); }
+        .price-change.down { background: var(--red-dim);   color: var(--red);   }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .period-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .chart-area {
+            position: relative;
+            height: 320px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── RESPONSIVE ──────────────────────────────── */
+        @media (max-width: 600px) {
+            .search-row { flex-direction: column; }
+            .stock-price { font-size: 2rem; }
+            header { padding: 1rem; }
+            main { padding: 2rem 1rem 4rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>StockPulse</h1>
+<header>
+    <span class="logo">StockPulse</span>
+    <span class="logo-badge">LIVE</span>
+</header>
 
-        <form method="POST" id="searchForm">
-            <div class="search-wrapper">
-                <input type="text" 
-                       name="symbol" 
-                       id="stockInput" 
-                       class="search-box" 
-                       placeholder="Enter Stock Symbol (e.g. RELIANCE.NS)" 
-                       autocomplete="off" 
-                       required>
-                <div id="suggestions" class="suggestions-dropdown"></div>
-            </div>
-            <button type="submit" class="search-btn">Visualize Trends</button>
-        </form>
-
-        {% if stock_data %}
-            <div class="result-card">
-                {% if stock_data.history_dates %}
-                    <div class="card-header">
-                        <div>
-                            <span class="symbol-tag">{{ stock_data.symbol }}</span>
-                            <p class="current-price">₹{{ stock_data.price }}</p>
-                        </div>
-                        <div style="text-align: right">
-                            <p style="color: var(--accent-color); font-weight: 600;">Last 30 Days</p>
-                            <p style="color: var(--text-secondary); font-size: 0.9rem;">Historical Trend</p>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <canvas id="stockChart"></canvas>
-                    </div>
-                {% else %}
-                    <p class="error-msg">{{ stock_data.price }}</p>
-                {% endif %}
-            </div>
-        {% endif %}
+<main>
+    <!-- Hero -->
+    <div class="hero-text">
+        <h1>Real-Time <span>Stock Visualization</span></h1>
+        <p>Search any stock symbol to see 30-day historical price trends.</p>
     </div>
 
-    <script>
-        const input = document.getElementById('stockInput');
-        const suggestionsDiv = document.getElementById('suggestions');
+    <!-- Search -->
+    <div class="search-card">
+        <form method="POST" id="searchForm">
+            <div class="search-row">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        name="symbol"
+                        id="stockInput"
+                        placeholder="e.g. TCS.NS, RELIANCE.NS, AAPL, TSLA"
+                        autocomplete="off"
+                        required
+                        {% if stock_data %}value="{{ stock_data.symbol }}"{% endif %}
+                    >
+                    <div id="suggestions" class="suggestions-dropdown"></div>
+                </div>
+                <button type="submit" class="search-btn">Visualize →</button>
+            </div>
+        </form>
+    </div>
 
-        // Suggestion Logic
-        input.addEventListener('input', async (e) => {
-            const query = e.target.value.trim();
-            if (query.length < 1) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
+    <!-- Error Banner -->
+    {% if error %}
+    <div class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span>{{ error }}</span>
+    </div>
+    {% endif %}
 
-            try {
-                const response = await fetch(`/suggest?q=${query}`);
-                const data = await response.json();
+    <!-- Results -->
+    {% if stock_data %}
 
-                if (data.length > 0) {
-                    suggestionsDiv.innerHTML = data.map(item => `
-                        <div class="suggestion-item" onclick="selectSuggestion('${item}')">
-                            ${item}
-                        </div>
-                    `).join('');
-                    suggestionsDiv.style.display = 'block';
-                } else {
-                    suggestionsDiv.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error fetching suggestions:', error);
-            }
-        });
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">30D High</div>
+            <div class="stat-value">{{ stock_data.currency }}{{ stock_data.high_52w }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">30D Low</div>
+            <div class="stat-value">{{ stock_data.currency }}{{ stock_data.low_52w }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Avg Volume</div>
+            <div class="stat-value">{{ "{:,}".format(stock_data.avg_volume) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Data Points</div>
+            <div class="stat-value">{{ stock_data.history_dates | length }} days</div>
+        </div>
+    </div>
 
-        function selectSuggestion(symbol) {
-            input.value = symbol;
-            suggestionsDiv.style.display = 'none';
-            document.getElementById('searchForm').submit();
+    <!-- Chart Card -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div>
+                <div class="stock-name">{{ stock_data.symbol }}</div>
+                <div class="stock-price">{{ stock_data.currency }}{{ stock_data.price }}</div>
+                {% if stock_data.price_change >= 0 %}
+                <span class="price-change up">▲ {{ stock_data.currency }}{{ stock_data.price_change }} ({{ stock_data.change_pct }}%)</span>
+                {% else %}
+                <span class="price-change down">▼ {{ stock_data.currency }}{{ stock_data.price_change | abs }} ({{ stock_data.change_pct | abs }}%)</span>
+                {% endif %}
+            </div>
+            <div>
+                <div class="period-label">Last 30 Days · Closing Price</div>
+            </div>
+        </div>
+
+        <div class="chart-area">
+            <canvas id="stockChart"></canvas>
+        </div>
+    </div>
+
+    {% endif %}
+</main>
+
+<script>
+// ── AUTOCOMPLETE ────────────────────────────────────────
+const input       = document.getElementById('stockInput');
+const suggestBox  = document.getElementById('suggestions');
+
+input.addEventListener('input', async (e) => {
+    const q = e.target.value.trim();
+    if (q.length < 1) { suggestBox.style.display = 'none'; return; }
+    try {
+        const res  = await fetch(`/suggest?q=${encodeURIComponent(q)}`);
+        const list = await res.json();
+        if (list.length > 0) {
+            suggestBox.innerHTML = list.map(sym => `
+                <div class="suggestion-item" onclick="pickSuggestion('${sym}')">${sym}</div>
+            `).join('');
+            suggestBox.style.display = 'block';
+        } else {
+            suggestBox.style.display = 'none';
         }
+    } catch (err) { suggestBox.style.display = 'none'; }
+});
 
-        document.addEventListener('click', (e) => {
-            if (!input.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                suggestionsDiv.style.display = 'none';
-            }
-        });
+function pickSuggestion(sym) {
+    input.value = sym;
+    suggestBox.style.display = 'none';
+    document.getElementById('searchForm').submit();
+}
 
-        // Chart Rendering Logic
-        {% if stock_data and stock_data.history_dates %}
-        const ctx = document.getElementById('stockChart').getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
-        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !suggestBox.contains(e.target))
+        suggestBox.style.display = 'none';
+});
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ stock_data.history_dates | tojson }},
-                datasets: [{
-                    label: 'Close Price',
-                    data: {{ stock_data.history_prices | tojson }},
-                    borderColor: '#10b981',
-                    borderWidth: 3,
-                    pointBackgroundColor: '#10b981',
-                    pointBorderColor: 'rgba(255, 255, 255, 0.2)',
-                    pointHoverRadius: 6,
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: gradient
-                }]
+// ── CHART ───────────────────────────────────────────────
+{% if stock_data and stock_data.history_dates %}
+(function () {
+    const ctx      = document.getElementById('stockChart').getContext('2d');
+    const dates    = {{ stock_data.history_dates  | tojson }};
+    const closes   = {{ stock_data.history_close  | tojson }};
+    const currency = {{ stock_data.currency       | tojson }};
+    const isUp     = closes[closes.length - 1] >= closes[0];
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, 320);
+    if (isUp) {
+        grad.addColorStop(0,   'rgba(16, 185, 129, 0.35)');
+        grad.addColorStop(1,   'rgba(16, 185, 129, 0)');
+    } else {
+        grad.addColorStop(0,   'rgba(239, 68, 68, 0.35)');
+        grad.addColorStop(1,   'rgba(239, 68, 68, 0)');
+    }
+
+    const lineColor = isUp ? '#10b981' : '#ef4444';
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Close Price',
+                data: closes,
+                borderColor: lineColor,
+                borderWidth: 2.5,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: lineColor,
+                tension: 0.35,
+                fill: true,
+                backgroundColor: grad
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f1f38',
+                    titleColor: '#94a3b8',
+                    bodyColor: '#f1f5f9',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 10,
+                    displayColors: false,
+                    callbacks: {
+                        title: (items) => items[0].label,
+                        label: (item)  => `Close: ${currency}${item.parsed.y.toLocaleString()}`
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1e293b',
-                        titleFont: { size: 14, weight: '600' },
-                        bodyFont: { size: 14 },
-                        padding: 12,
-                        cornerRadius: 10,
-                        displayColors: false,
-                        callbacks: {
-                            label: (context) => `Price: ₹${context.parsed.y}`
-                        }
+            scales: {
+                x: {
+                    grid:  { display: false },
+                    border: { display: false },
+                    ticks: {
+                        color: '#64748b',
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 7,
+                        font: { size: 12 }
                     }
                 },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { 
-                            color: '#94a3b8',
-                            maxRotation: 0,
-                            autoSkip: true,
-                            maxTicksLimit: 7
-                        }
-                    },
-                    y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#94a3b8' }
+                y: {
+                    position: 'right',
+                    grid:  { color: 'rgba(255,255,255,0.04)' },
+                    border: { display: false },
+                    ticks: {
+                        color: '#64748b',
+                        font: { size: 12 },
+                        callback: (v) => currency + v.toLocaleString()
                     }
                 }
             }
-        });
-        {% endif %}
-    </script>
+        }
+    });
+})();
+{% endif %}
+</script>
+
 </body>
 </html>

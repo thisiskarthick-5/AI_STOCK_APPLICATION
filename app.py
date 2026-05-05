@@ -16,20 +16,29 @@ def index():
     stock_data = None
 
     if request.method == 'POST':
-        symbol = request.form['symbol']
+        symbol = request.form['symbol'].upper()
         stock = yf.Ticker(symbol)
-        data = stock.history(period="1d")
+        # Fetch 1 month of history for chart visualization
+        history = stock.history(period="1mo")
 
-        if not data.empty:
-            price = round(data['Close'][0], 2)
+        if not history.empty:
+            # Extract current price
+            current_price = round(history['Close'][-1], 2)
+            
+            # Extract historical data for Chart.js
+            dates = history.index.strftime('%Y-%m-%d').tolist()
+            prices = [round(p, 2) for p in history['Close'].tolist()]
+            
             stock_data = {
-                'symbol': symbol.upper(),
-                'price': price
+                'symbol': symbol,
+                'price': current_price,
+                'history_dates': dates,
+                'history_prices': prices
             }
         else:
             stock_data = {
-                'symbol': symbol.upper(),
-                'price': "Invalid stock symbol"
+                'symbol': symbol,
+                'price': "Invalid stock symbol or no data available"
             }
 
     return render_template('index.html', stock_data=stock_data)

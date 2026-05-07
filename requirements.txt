@@ -3,3 +3,4 @@ yfinance
 gunicorn
 pandas
 requests
+flask-cors

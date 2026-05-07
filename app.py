@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import yfinance as yf
 
 app = Flask(__name__)
+CORS(app)
 
 # Popular stock symbols (Indian .NS and global)
 POPULAR_STOCKS = [

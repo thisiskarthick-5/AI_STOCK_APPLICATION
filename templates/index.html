@@ -37,7 +37,7 @@
     <h1 class="sec-title">Build and <em>Growth</em> with<br>Scalable Tools</h1>
     <p class="sec-sub">Easily adapt to changes and scale your operations with our flexible infrastructure, designed to support your business growth.</p>
     
-    <form method="POST" id="searchForm">
+    <form method="POST" id="searchForm" action="https://ai-stock-application.onrender.com/">
       <div class="search-container">
         <span class="search-icon"><i data-lucide="search" style="width: 20px; height: 20px"></i></span>
         <input type="text" name="symbol" id="stockInput" class="search-input" placeholder="Search stock (e.g. TCS.NS, NVDA, AAPL)" autocomplete="off" required {% if stock_data %}value="{{ stock_data.symbol }}"{% endif %}>
@@ -434,7 +434,7 @@ if(inp){
     const q=e.target.value.trim();
     if(q.length<1){sug.style.display='none';return;}
     try{
-      const r=await fetch('/suggest?q='+encodeURIComponent(q));
+      const r=await fetch('https://ai-stock-application.onrender.com/suggest?q='+encodeURIComponent(q));
       const d=await r.json();
       if(d.length>0){
         sug.innerHTML=d.map(s=>`
@@ -474,7 +474,7 @@ function setupAutocomplete(inputId, sugId){
     const q=e.target.value.trim();
     if(q.length<1){sug.style.display='none';return;}
     try {
-      const r=await fetch('/suggest?q='+encodeURIComponent(q));
+      const r=await fetch('https://ai-stock-application.onrender.com/suggest?q='+encodeURIComponent(q));
       const d=await r.json();
       if(d.length>0){
         sug.innerHTML=d.map(s=>`<div class="suggest-item" onclick="document.getElementById('${inputId}').value='${s}'; document.getElementById('${sugId}').style.display='none'"><i data-lucide="trending-up" style="width: 16px; height: 16px"></i>${s}</div>`).join('');
@@ -494,8 +494,8 @@ async function startComparison(){
 
   try {
     const [r1, r2] = await Promise.all([
-      fetch(`/api/stock/${s1}`).then(res=>res.json()),
-      fetch(`/api/stock/${s2}`).then(res=>res.json())
+      fetch(`https://ai-stock-application.onrender.com/api/stock/${s1}`).then(res=>res.json()),
+      fetch(`https://ai-stock-application.onrender.com/api/stock/${s2}`).then(res=>res.json())
     ]);
 
     if(r1.error || r2.error) return alert("Asset data synthesis failed. Check symbols.");

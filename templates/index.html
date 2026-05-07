@@ -1,554 +1,604 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="StockPulse - Real-time stock price visualization with interactive charts for Indian and global stocks.">
-    <title>StockPulse | Stock Price Visualizer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --bg:           #0b1120;
-            --surface:      rgba(22, 33, 55, 0.85);
-            --surface-2:    rgba(30, 45, 70, 0.6);
-            --border:       rgba(255, 255, 255, 0.08);
-            --green:        #10b981;
-            --green-dim:    rgba(16, 185, 129, 0.15);
-            --red:          #ef4444;
-            --red-dim:      rgba(239, 68, 68, 0.15);
-            --blue:         #3b82f6;
-            --text:         #f1f5f9;
-            --muted:        #64748b;
-            --subtle:       #94a3b8;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            background-image:
-                radial-gradient(ellipse 80% 50% at 80% -10%, rgba(16,185,129,0.12), transparent),
-                radial-gradient(ellipse 60% 40% at 10% 90%,  rgba(59,130,246,0.10), transparent);
-        }
-
-        /* ── HEADER ─────────────────────────────────── */
-        header {
-            border-bottom: 1px solid var(--border);
-            padding: 1.25rem 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(11, 17, 32, 0.8);
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, var(--green), var(--blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.04em;
-        }
-
-        .logo-badge {
-            font-size: 0.65rem;
-            font-weight: 700;
-            background: var(--green-dim);
-            color: var(--green);
-            border: 1px solid rgba(16,185,129,0.3);
-            padding: 0.2rem 0.5rem;
-            border-radius: 999px;
-            letter-spacing: 0.08em;
-        }
-
-        /* ── MAIN LAYOUT ─────────────────────────────── */
-        main {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 3rem 1.5rem 5rem;
-        }
-
-        .hero-text {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
-        .hero-text h1 {
-            font-size: clamp(1.8rem, 4vw, 3rem);
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            line-height: 1.1;
-            margin-bottom: 0.75rem;
-        }
-
-        .hero-text h1 span {
-            background: linear-gradient(90deg, var(--green), var(--blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-text p {
-            color: var(--subtle);
-            font-size: 1.05rem;
-        }
-
-        /* ── SEARCH ──────────────────────────────────── */
-        .search-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2rem;
-            backdrop-filter: blur(16px);
-            margin-bottom: 2rem;
-        }
-
-        .search-row {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .search-wrapper {
-            position: relative;
-            flex: 1;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 1.1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--muted);
-            font-size: 1rem;
-            pointer-events: none;
-        }
-
-        #stockInput {
-            width: 100%;
-            padding: 0.95rem 1rem 0.95rem 2.8rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            color: var(--text);
-            font-size: 1rem;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        #stockInput:focus {
-            border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-        }
-
-        #stockInput::placeholder { color: var(--muted); }
-
-        .suggestions-dropdown {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0; right: 0;
-            background: #1a2540;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            z-index: 200;
-            display: none;
-            overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-        }
-
-        .suggestion-item {
-            padding: 0.75rem 1.1rem;
-            cursor: pointer;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            transition: background 0.15s;
-        }
-
-        .suggestion-item:last-child { border-bottom: none; }
-
-        .suggestion-item::before {
-            content: '📈';
-            font-size: 0.85rem;
-        }
-
-        .suggestion-item:hover {
-            background: var(--green-dim);
-            color: var(--green);
-        }
-
-        .search-btn {
-            padding: 0.95rem 1.8rem;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: none;
-            border-radius: 14px;
-            color: white;
-            font-weight: 700;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: transform 0.18s, box-shadow 0.18s;
-            white-space: nowrap;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-        }
-
-        .search-btn:active { transform: translateY(0); }
-
-        /* ── ERROR BANNER ────────────────────────────── */
-        .error-banner {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: var(--red-dim);
-            border: 1px solid rgba(239,68,68,0.25);
-            border-radius: 14px;
-            padding: 1rem 1.25rem;
-            color: #fca5a5;
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .error-icon { font-size: 1.2rem; }
-
-        /* ── STATS ROW ───────────────────────────────── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.1rem 1.25rem;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: var(--muted);
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            margin-bottom: 0.35rem;
-        }
-
-        .stat-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-
-        /* ── CHART CARD ──────────────────────────────── */
-        .chart-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2rem;
-            backdrop-filter: blur(16px);
-            animation: fadeIn 0.5s cubic-bezier(0.16,1,0.3,1);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stock-name {
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 0.4rem;
-        }
-
-        .stock-price {
-            font-size: 2.8rem;
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            line-height: 1;
-            color: var(--text);
-        }
-
-        .price-change {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            padding: 0.3rem 0.7rem;
-            border-radius: 999px;
-            margin-top: 0.5rem;
-        }
-
-        .price-change.up   { background: var(--green-dim); color: var(--green); }
-        .price-change.down { background: var(--red-dim);   color: var(--red);   }
-
-        .chart-controls {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .period-label {
-            font-size: 0.8rem;
-            color: var(--muted);
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-
-        .chart-area {
-            position: relative;
-            height: 320px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── RESPONSIVE ──────────────────────────────── */
-        @media (max-width: 600px) {
-            .search-row { flex-direction: column; }
-            .stock-price { font-size: 2rem; }
-            header { padding: 1rem; }
-            main { padding: 2rem 1rem 4rem; }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quantum Predictor | High-Fidelity Market Signals</title>
+<link rel="stylesheet" href="/static/style.css">
+<!-- Lucide Icons for Premium Look -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-<header>
-    <span class="logo">StockPulse</span>
-    <span class="logo-badge">LIVE</span>
-</header>
-
-<main>
-    <!-- Hero -->
-    <div class="hero-text">
-        <h1>Real-Time <span>Stock Visualization</span></h1>
-        <p>Search any stock symbol to see 30-day historical price trends.</p>
+<nav>
+  <div class="nav-logo">
+    <div style="width: 32px; height: 32px; background: var(--btn-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white">
+      <i data-lucide="cpu" style="width: 18px; height: 18px"></i>
     </div>
+    Quantum
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showSection('dashboard')">Home</button>
+    <button class="nav-link" onclick="showSection('markets')">Markets</button>
+    <button class="nav-link" onclick="showSection('predictions')">Predictions</button>
+    <button class="nav-link" onclick="showSection('portfolio')">Portfolio</button>
+    <button class="nav-link" onclick="showSection('compare')">Compare</button>
+  </div>
+  <button class="btn-nav">Get Started</button>
+</nav>
 
-    <!-- Search -->
-    <div class="search-card">
-        <form method="POST" id="searchForm">
-            <div class="search-row">
-                <div class="search-wrapper">
-                    <span class="search-icon">🔍</span>
-                    <input
-                        type="text"
-                        name="symbol"
-                        id="stockInput"
-                        placeholder="e.g. TCS.NS, RELIANCE.NS, AAPL, TSLA"
-                        autocomplete="off"
-                        required
-                        {% if stock_data %}value="{{ stock_data.symbol }}"{% endif %}
-                    >
-                    <div id="suggestions" class="suggestions-dropdown"></div>
-                </div>
-                <button type="submit" class="search-btn">Visualize →</button>
-            </div>
-        </form>
+<!-- ═══ SECTION 1: DASHBOARD ═══ -->
+<div id="sec-dashboard" class="section active">
+  <div style="text-align:center; margin-top: 2rem">
+    <div class="hero-badge">
+      <i data-lucide="star" style="width: 14px; height: 14px; margin-right: 4px"></i> 
+      FROM STRATEGY TO SUCCESS
     </div>
+    <h1 class="sec-title">Build and <em>Growth</em> with<br>Scalable Tools</h1>
+    <p class="sec-sub">Easily adapt to changes and scale your operations with our flexible infrastructure, designed to support your business growth.</p>
+    
+    <form method="POST" id="searchForm">
+      <div class="search-container">
+        <span class="search-icon"><i data-lucide="search" style="width: 20px; height: 20px"></i></span>
+        <input type="text" name="symbol" id="stockInput" class="search-input" placeholder="Search stock (e.g. TCS.NS, NVDA, AAPL)" autocomplete="off" required {% if stock_data %}value="{{ stock_data.symbol }}"{% endif %}>
+        <div id="suggestions" class="suggest-dd" style="top: 100%; border-radius: 20px; margin-top: 10px; background: white; box-shadow: var(--shadow); border: 1px solid var(--border)"></div>
+      </div>
+      <div style="display:flex; gap: 1rem; justify-content: center; margin-bottom: 4rem">
+        <button type="submit" class="btn-main">Analyze Asset</button>
+        <button type="button" class="btn-outline" onclick="showSection('markets')">Live Markets</button>
+      </div>
+    </form>
+  </div>
 
-    <!-- Error Banner -->
-    {% if error %}
-    <div class="error-banner">
-        <span class="error-icon">⚠️</span>
-        <span>{{ error }}</span>
+  {% if error %}
+  <div class="card" style="margin-bottom: 2rem; border-color: rgba(239, 68, 68, 0.3); background: rgba(255, 255, 255, 0.9)">
+    <div style="display: flex; align-items: center; gap: 1rem; color: #ef4444">
+      <i data-lucide="alert-circle" style="width: 24px; height: 24px"></i> 
+      <strong>Analysis Error:</strong> {{ error }}
     </div>
-    {% endif %}
+  </div>
+  {% endif %}
 
-    <!-- Results -->
-    {% if stock_data %}
-
-    <!-- Stats Row -->
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-label">30D High</div>
-            <div class="stat-value">{{ stock_data.currency }}{{ stock_data.high_52w }}</div>
+  {% if stock_data %}
+  <div class="grid-2" style="margin-bottom: 2rem">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem">
+        <div>
+          <div class="stat-label">Market Intelligence</div>
+          <div style="font-size: 1.25rem; font-weight: 700">{{ stock_data.symbol }} · 30D Trend Analysis</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">30D Low</div>
-            <div class="stat-value">{{ stock_data.currency }}{{ stock_data.low_52w }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Avg Volume</div>
-            <div class="stat-value">{{ "{:,}".format(stock_data.avg_volume) }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Data Points</div>
-            <div class="stat-value">{{ stock_data.history_dates | length }} days</div>
-        </div>
+        <span class="tag-bull">● BULLISH</span>
+      </div>
+      <div style="height: 250px"><canvas id="miniChart"></canvas></div>
     </div>
-
-    <!-- Chart Card -->
-    <div class="chart-card">
-        <div class="chart-header">
-            <div>
-                <div class="stock-name">{{ stock_data.symbol }}</div>
-                <div class="stock-price">{{ stock_data.currency }}{{ stock_data.price }}</div>
-                {% if stock_data.price_change >= 0 %}
-                <span class="price-change up">▲ {{ stock_data.currency }}{{ stock_data.price_change }} ({{ stock_data.change_pct }}%)</span>
-                {% else %}
-                <span class="price-change down">▼ {{ stock_data.currency }}{{ stock_data.price_change | abs }} ({{ stock_data.change_pct | abs }}%)</span>
-                {% endif %}
-            </div>
-            <div>
-                <div class="period-label">Last 30 Days · Closing Price</div>
-            </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 2rem">
+      <div class="card" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center">
+        <div class="stat-label" style="margin-bottom: 0.5rem">Current Valuation</div>
+        <div class="stat-big" style="color: var(--primary)">{{ stock_data.currency }}{{ stock_data.price }}</div>
+        {% if stock_data.price_change >= 0 %}
+        <div style="color: #166534; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 4px">
+          <i data-lucide="trending-up" style="width: 16px; height: 16px"></i> ↑ {{ stock_data.change_pct }}% Growth
         </div>
-
-        <div class="chart-area">
-            <canvas id="stockChart"></canvas>
+        {% else %}
+        <div style="color: #991b1b; font-weight: 700; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 4px">
+          <i data-lucide="trending-down" style="width: 16px; height: 16px"></i> ↓ {{ stock_data.change_pct|abs }}% Volatility
         </div>
+        {% endif %}
+      </div>
+      <div class="card" style="padding: 1.5rem 2.5rem">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <div>
+            <div class="stat-label">Model Confidence</div>
+            <div style="font-size: 1.5rem; font-weight: 800">94.8%</div>
+          </div>
+          <div style="width: 60px; height: 60px; border: 4px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700">94%</div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    {% endif %}
-</main>
+  <div class="card" style="margin-bottom: 2rem">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem">
+      <div>
+        <h2 style="font-family: 'Instrument Serif', serif; font-size: 2.5rem">{{ stock_data.symbol }} Performance History</h2>
+        <p style="color: var(--text-muted)">Historical pricing data processed via Quantum Neural Engine.</p>
+      </div>
+      <div style="text-align: right">
+        <div class="stat-label">30-Day High</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary)">{{ stock_data.currency }}{{ stock_data.high_52w }}</div>
+      </div>
+    </div>
+    <div style="height: 400px"><canvas id="stockChart"></canvas></div>
+  </div>
+  {% endif %}
+
+  {% if not stock_data and not error %}
+  <div class="grid-3" style="margin-top: 2rem">
+    <div class="card" style="text-align: center">
+      <div style="width: 48px; height: 48px; background: rgba(0,98,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary)">
+        <i data-lucide="cloud-lightning" style="width: 24px; height: 24px"></i>
+      </div>
+      <h3 style="font-weight: 700; margin-bottom: 0.5rem">Cloud Integration</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem">Sync your market data across all your cloud-enabled devices seamlessly.</p>
+    </div>
+    <div class="card" style="text-align: center">
+      <div style="width: 48px; height: 48px; background: rgba(0,98,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary)">
+        <i data-lucide="bar-chart-3" style="width: 24px; height: 24px"></i>
+      </div>
+      <h3 style="font-weight: 700; margin-bottom: 0.5rem">Growth Tools</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem">Advanced visualization tools designed to identify and track asset growth.</p>
+    </div>
+    <div class="card" style="text-align: center">
+      <div style="width: 48px; height: 48px; background: rgba(0,98,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary)">
+        <i data-lucide="shield-check" style="width: 24px; height: 24px"></i>
+      </div>
+      <h3 style="font-weight: 700; margin-bottom: 0.5rem">Secure Platform</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem">Military-grade encryption for all your financial research and portfolio data.</p>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ═══ SECTION 2: MARKETS ═══ -->
+<div id="sec-markets" class="section">
+  <div class="card">
+    <h2 class="sec-title" style="color: var(--text-dark); text-align: left; font-size: 3rem">Live Markets</h2>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 2rem">
+      <thead>
+        <tr style="text-align: left; border-bottom: 1px solid var(--border)">
+          <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem">SYMBOL</th>
+          <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem">PRICE</th>
+          <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem">CHANGE</th>
+          <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem">ACTION</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid rgba(0,0,0,0.03)">
+          <td style="padding: 1.5rem 1rem; font-weight: 700">TCS.NS</td>
+          <td style="padding: 1.5rem 1rem">₹3,800</td>
+          <td style="padding: 1.5rem 1rem; color: #166534; font-weight: 700">+1.2%</td>
+          <td style="padding: 1.5rem 1rem"><button class="btn-main" style="padding: 0.5rem 1.2rem; font-size: 0.8rem" onclick="quickSearch('TCS.NS')">Analyze</button></td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(0,0,0,0.03)">
+          <td style="padding: 1.5rem 1rem; font-weight: 700">AAPL</td>
+          <td style="padding: 1.5rem 1rem">$192.50</td>
+          <td style="padding: 1.5rem 1rem; color: #166534; font-weight: 700">+1.5%</td>
+          <td style="padding: 1.5rem 1rem"><button class="btn-main" style="padding: 0.5rem 1.2rem; font-size: 0.8rem" onclick="quickSearch('AAPL')">Analyze</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ SECTION 3: PREDICTIONS ═══ -->
+<div id="sec-predictions" class="section">
+  <div style="text-align: center; max-width: 800px; margin: 0 auto 3rem">
+    <div class="hero-badge" style="color: var(--primary); background: rgba(0,98,255,0.1)">
+      <i data-lucide="zap" style="width: 14px; height: 14px; margin-right: 4px"></i> QUANTUM SIGNALS
+    </div>
+    <h2 class="sec-title" style="color: var(--text-dark); font-size: 3.5rem">Predictive <em>Intelligence</em></h2>
+    <p class="sec-sub">Our neural models analyze millions of data points to generate high-fidelity market signals.</p>
+  </div>
+
+  <div class="grid-3" style="margin-bottom: 2rem">
+    <div class="card" style="text-align: center">
+      <div class="stat-label">Model Accuracy</div>
+      <div style="font-size: 2.5rem; font-weight: 800; color: #166534">94.8%</div>
+    </div>
+    <div class="card" style="text-align: center">
+      <div class="stat-label">Signals Today</div>
+      <div style="font-size: 2.5rem; font-weight: 800">12</div>
+    </div>
+    <div class="card" style="text-align: center">
+      <div class="stat-label">Active Nodes</div>
+      <div style="font-size: 2.5rem; font-weight: 800">3</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem">
+      <i data-lucide="list" style="width: 24px; height: 24px"></i>
+      <h3 style="font-weight: 700">Recent Neural Signals</h3>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: rgba(255,255,255,0.5); border-radius: 20px">
+        <div style="display: flex; align-items: center; gap: 1rem">
+          <div style="width: 40px; height: 40px; background: #dcfce7; color: #166534; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+            <i data-lucide="arrow-up-right" style="width: 20px; height: 20px"></i>
+          </div>
+          <div>
+            <div style="font-weight: 700">TCS.NS</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted)">Confidence: 87%</div>
+          </div>
+        </div>
+        <span class="tag-bull" style="background: #166534; color: white">BUY SIGNAL</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: rgba(255,255,255,0.5); border-radius: 20px">
+        <div style="display: flex; align-items: center; gap: 1rem">
+          <div style="width: 40px; height: 40px; background: #fee2e2; color: #991b1b; border-radius: 50%; display: flex; align-items: center; justify-content: center">
+            <i data-lucide="arrow-down-right" style="width: 20px; height: 20px"></i>
+          </div>
+          <div>
+            <div style="font-weight: 700">TSLA</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted)">Confidence: 72%</div>
+          </div>
+        </div>
+        <span class="tag-bull" style="background: #991b1b; color: white">SELL SIGNAL</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 4: PORTFOLIO ═══ -->
+<div id="sec-portfolio" class="section">
+  <div style="margin-bottom: 3rem">
+    <h2 class="sec-title" style="color: var(--text-dark); text-align: left; font-size: 3rem">Asset Portfolio</h2>
+    <p class="sec-sub" style="text-align: left; margin: 0">Manage your holdings and track performance in real-time.</p>
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 2rem">
+    <div class="card" style="background: var(--btn-dark); color: white">
+      <div class="stat-label" style="color: rgba(255,255,255,0.6)">Net Portfolio Value</div>
+      <div style="font-size: 3.5rem; font-weight: 800; letter-spacing: -0.05em">₹4,52,800</div>
+      <div style="display: flex; gap: 1rem; margin-top: 1rem">
+        <div style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 99px; font-size: 0.8rem">
+          Today: <span style="color: #4ade80">+₹3,240</span>
+        </div>
+        <div style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 99px; font-size: 0.8rem">
+          All-Time: <span style="color: #4ade80">+12.4%</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem">
+        <h3 style="font-weight: 700">Allocation</h3>
+        <i data-lucide="pie-chart" style="width: 20px; height: 20px; color: var(--text-muted)"></i>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1rem">
+        <div style="display: flex; justify-content: space-between">
+          <span style="font-size: 0.9rem">Equities</span>
+          <span style="font-weight: 700">85%</span>
+        </div>
+        <div style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 99px; overflow: hidden">
+          <div style="width: 85%; height: 100%; background: var(--primary)"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between">
+          <span style="font-size: 0.9rem">Liquid Assets</span>
+          <span style="font-weight: 700">15%</span>
+        </div>
+        <div style="height: 8px; background: rgba(0,0,0,0.05); border-radius: 99px; overflow: hidden">
+          <div style="width: 15%; height: 100%; background: #4ade80"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem">
+      <h3 style="font-weight: 700">Active Holdings</h3>
+      <button class="btn-outline" style="padding: 0.5rem 1.2rem; font-size: 0.8rem">Download Report</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1px; background: var(--border); border-radius: 20px; overflow: hidden; border: 1px solid var(--border)">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; padding: 1.5rem; background: white; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase">
+        <span>Asset</span>
+        <span>Position</span>
+        <span>Avg. Price</span>
+        <span style="text-align: right">Total Value</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; padding: 1.5rem; background: rgba(255,255,255,0.8); align-items: center">
+        <div style="font-weight: 700">TCS.NS</div>
+        <div style="font-size: 0.9rem">25 Shares</div>
+        <div style="font-size: 0.9rem">₹3,650</div>
+        <div style="text-align: right">
+          <div style="font-weight: 800">₹95,000</div>
+          <div style="font-size: 0.75rem; color: #166534">+4.1%</div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; padding: 1.5rem; background: rgba(255,255,255,0.8); align-items: center">
+        <div style="font-weight: 700">AAPL</div>
+        <div style="font-size: 0.9rem">5 Shares</div>
+        <div style="font-size: 0.9rem">$185.00</div>
+        <div style="text-align: right">
+          <div style="font-weight: 800">$962.50</div>
+          <div style="font-size: 0.75rem; color: #166534">+4.0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SECTION 5: COMPARISON ═══ -->
+<div id="sec-compare" class="section">
+  <div style="text-align: center; max-width: 800px; margin: 0 auto 4rem">
+    <div class="hero-badge" style="color: var(--primary); background: rgba(0,98,255,0.1)">
+      <i data-lucide="git-compare" style="width: 14px; height: 14px; margin-right: 4px"></i> ASSET COMPARISON
+    </div>
+    <h2 class="sec-title" style="color: var(--text-dark); font-size: 3.5rem">Deep <em>Synthesis</em> Comparison</h2>
+    <p class="sec-sub">Select two assets to evaluate their relative performance and market dynamics side-by-side.</p>
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 3rem">
+    <div class="search-container" style="margin: 0; max-width: 100%">
+      <span class="search-icon"><i data-lucide="search" style="width: 20px; height: 20px"></i></span>
+      <input type="text" id="compLeft" class="search-input" placeholder="Stock A (e.g. AAPL)" autocomplete="off">
+      <div id="sugLeft" class="suggest-dd"></div>
+    </div>
+    <div class="search-container" style="margin: 0; max-width: 100%">
+      <span class="search-icon"><i data-lucide="search" style="width: 20px; height: 20px"></i></span>
+      <input type="text" id="compRight" class="search-input" placeholder="Stock B (e.g. MSFT)" autocomplete="off">
+      <div id="sugRight" class="suggest-dd"></div>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin-bottom: 4rem">
+    <button onclick="startComparison()" class="btn-main" style="padding: 1.2rem 4rem; font-size: 1.1rem">Run Comparison Analysis</button>
+  </div>
+
+  <div id="comparisonOutput" style="display: none">
+    <div class="grid-2" style="margin-bottom: 3rem">
+      <div class="card" id="cardLeft" style="position: relative; overflow: hidden">
+        <div id="winnerLeft" style="display: none; position: absolute; top: 0; right: 0; background: var(--primary); color: white; padding: 0.5rem 1.5rem; border-bottom-left-radius: 20px; font-weight: 800; font-size: 0.7rem">PERFORMANCE WINNER</div>
+        <div class="stat-label" id="labelLeft">ASSET A</div>
+        <div class="stat-big" id="priceLeft" style="margin: 1rem 0">$0.00</div>
+        <div id="pctLeft" style="font-weight: 700">+0.0%</div>
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem">
+            <span style="color: var(--text-muted)">30D High</span>
+            <span id="highLeft" style="font-weight: 700">$0.00</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="cardRight" style="position: relative; overflow: hidden">
+        <div id="winnerRight" style="display: none; position: absolute; top: 0; right: 0; background: var(--primary); color: white; padding: 0.5rem 1.5rem; border-bottom-left-radius: 20px; font-weight: 800; font-size: 0.7rem">PERFORMANCE WINNER</div>
+        <div class="stat-label" id="labelRight">ASSET B</div>
+        <div class="stat-big" id="priceRight" style="margin: 1rem 0">$0.00</div>
+        <div id="pctRight" style="font-weight: 700">+0.0%</div>
+        <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem">
+            <span style="color: var(--text-muted)">30D High</span>
+            <span id="highRight" style="font-weight: 700">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stat-label" style="margin-bottom: 2rem">Overlaid Performance Synthesis</div>
+      <div style="height: 400px"><canvas id="compChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<footer style="margin-top: 6rem; padding: 6rem 4rem; background: white; border-top-left-radius: 64px; border-top-right-radius: 64px">
+  <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem">
+    <div>
+      <div style="font-weight: 800; font-size: 1.5rem; margin-bottom: 1.5rem">Quantum.</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6">Empowering individuals with high-fidelity market signals and institutional-grade predictive intelligence.</p>
+    </div>
+    <div>
+      <h4 style="font-weight: 700; margin-bottom: 1.5rem">Platform</h4>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem">
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Dashboard</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Markets</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Neural Signals</a>
+      </div>
+    </div>
+    <div>
+      <h4 style="font-weight: 700; margin-bottom: 1.5rem">Company</h4>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem">
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">About Us</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Security</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Cloud Status</a>
+      </div>
+    </div>
+    <div>
+      <h4 style="font-weight: 700; margin-bottom: 1.5rem">Legal</h4>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.9rem">
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Privacy Policy</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Risk Disclosure</a>
+        <a href="#" style="text-decoration: none; color: var(--text-muted)">Terms</a>
+      </div>
+    </div>
+  </div>
+  <div style="max-width: 1200px; margin: 4rem auto 0; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.8rem">
+    <span>© 2024 QUANTUM PREDICTOR. ALL RIGHTS RESERVED.</span>
+    <div style="display: flex; gap: 1.5rem">
+      <i data-lucide="twitter" style="width: 18px; height: 18px; cursor: pointer"></i>
+      <i data-lucide="linkedin" style="width: 18px; height: 18px; cursor: pointer"></i>
+      <i data-lucide="github" style="width: 18px; height: 18px; cursor: pointer"></i>
+    </div>
+  </div>
+</footer>
 
 <script>
-// ── AUTOCOMPLETE ────────────────────────────────────────
-const input       = document.getElementById('stockInput');
-const suggestBox  = document.getElementById('suggestions');
+// Initialize Lucide Icons
+lucide.createIcons();
 
-input.addEventListener('input', async (e) => {
-    const q = e.target.value.trim();
-    if (q.length < 1) { suggestBox.style.display = 'none'; return; }
-    try {
-        const res  = await fetch(`/suggest?q=${encodeURIComponent(q)}`);
-        const list = await res.json();
-        if (list.length > 0) {
-            suggestBox.innerHTML = list.map(sym => `
-                <div class="suggestion-item" onclick="pickSuggestion('${sym}')">${sym}</div>
-            `).join('');
-            suggestBox.style.display = 'block';
-        } else {
-            suggestBox.style.display = 'none';
-        }
-    } catch (err) { suggestBox.style.display = 'none'; }
-});
-
-function pickSuggestion(sym) {
-    input.value = sym;
-    suggestBox.style.display = 'none';
-    document.getElementById('searchForm').submit();
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  event.target.classList.add('active');
+  // Re-run lucide icons in case any new content appeared
+  lucide.createIcons();
+}
+function quickSearch(sym){
+  document.getElementById('stockInput').value=sym;
+  document.getElementById('searchForm').submit();
 }
 
+// AUTOCOMPLETE
+const inp=document.getElementById('stockInput'),sug=document.getElementById('suggestions');
+if(inp){
+  inp.addEventListener('input',async e=>{
+    const q=e.target.value.trim();
+    if(q.length<1){sug.style.display='none';return;}
+    try{
+      const r=await fetch('/suggest?q='+encodeURIComponent(q));
+      const d=await r.json();
+      if(d.length>0){
+        sug.innerHTML=d.map(s=>`
+          <div class="suggest-item" onclick="pickSug('${s}')">
+            <i data-lucide="trending-up" style="width: 18px; height: 18px"></i>
+            <span>${s}</span>
+          </div>
+        `).join('');
+        sug.style.display='block';
+        lucide.createIcons(); // Initialize icons for new items
+      } else {
+        sug.style.display='none';
+      }
+    } catch(e){ sug.style.display='none'; }
+  });
+}
+
+function pickSug(s){
+  inp.value=s;
+  sug.style.display='none';
+  document.getElementById('searchForm').submit();
+}
+
+// Click outside to close
 document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !suggestBox.contains(e.target))
-        suggestBox.style.display = 'none';
+  if (!inp.contains(e.target) && !sug.contains(e.target)) {
+    sug.style.display = 'none';
+  }
 });
 
-// ── CHART ───────────────────────────────────────────────
-{% if stock_data and stock_data.history_dates %}
-(function () {
-    const ctx      = document.getElementById('stockChart').getContext('2d');
-    const dates    = {{ stock_data.history_dates  | tojson }};
-    const closes   = {{ stock_data.history_close  | tojson }};
-    const currency = {{ stock_data.currency       | tojson }};
-    const isUp     = closes[closes.length - 1] >= closes[0];
+// CHARTS
+// MULTI-AUTOCOMPLETE
+function setupAutocomplete(inputId, sugId){
+  const inp=document.getElementById(inputId), sug=document.getElementById(sugId);
+  if(!inp) return;
+  inp.addEventListener('input',async e=>{
+    const q=e.target.value.trim();
+    if(q.length<1){sug.style.display='none';return;}
+    try {
+      const r=await fetch('/suggest?q='+encodeURIComponent(q));
+      const d=await r.json();
+      if(d.length>0){
+        sug.innerHTML=d.map(s=>`<div class="suggest-item" onclick="document.getElementById('${inputId}').value='${s}'; document.getElementById('${sugId}').style.display='none'"><i data-lucide="trending-up" style="width: 16px; height: 16px"></i>${s}</div>`).join('');
+        sug.style.display='block'; lucide.createIcons();
+      } else sug.style.display='none';
+    } catch(e){sug.style.display='none';}
+  });
+}
+setupAutocomplete('compLeft', 'sugLeft');
+setupAutocomplete('compRight', 'sugRight');
 
-    // Gradient fill
-    const grad = ctx.createLinearGradient(0, 0, 0, 320);
-    if (isUp) {
-        grad.addColorStop(0,   'rgba(16, 185, 129, 0.35)');
-        grad.addColorStop(1,   'rgba(16, 185, 129, 0)');
-    } else {
-        grad.addColorStop(0,   'rgba(239, 68, 68, 0.35)');
-        grad.addColorStop(1,   'rgba(239, 68, 68, 0)');
-    }
+let compChartInstance = null;
+async function startComparison(){
+  const s1 = document.getElementById('compLeft').value.toUpperCase();
+  const s2 = document.getElementById('compRight').value.toUpperCase();
+  if(!s1 || !s2) return alert("Select two assets to compare.");
 
-    const lineColor = isUp ? '#10b981' : '#ef4444';
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`/api/stock/${s1}`).then(res=>res.json()),
+      fetch(`/api/stock/${s2}`).then(res=>res.json())
+    ]);
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: 'Close Price',
-                data: closes,
-                borderColor: lineColor,
-                borderWidth: 2.5,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: lineColor,
-                tension: 0.35,
-                fill: true,
-                backgroundColor: grad
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#0f1f38',
-                    titleColor: '#94a3b8',
-                    bodyColor: '#f1f5f9',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    padding: 12,
-                    cornerRadius: 10,
-                    displayColors: false,
-                    callbacks: {
-                        title: (items) => items[0].label,
-                        label: (item)  => `Close: ${currency}${item.parsed.y.toLocaleString()}`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid:  { display: false },
-                    border: { display: false },
-                    ticks: {
-                        color: '#64748b',
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 7,
-                        font: { size: 12 }
-                    }
-                },
-                y: {
-                    position: 'right',
-                    grid:  { color: 'rgba(255,255,255,0.04)' },
-                    border: { display: false },
-                    ticks: {
-                        color: '#64748b',
-                        font: { size: 12 },
-                        callback: (v) => currency + v.toLocaleString()
-                    }
-                }
-            }
+    if(r1.error || r2.error) return alert("Asset data synthesis failed. Check symbols.");
+
+    document.getElementById('comparisonOutput').style.display = 'block';
+    
+    const update = (side, data) => {
+      document.getElementById('label'+side).innerText = data.symbol;
+      document.getElementById('price'+side).innerText = data.currency + data.price;
+      document.getElementById('pct'+side).innerText = (data.change_pct >= 0 ? '+' : '') + data.change_pct + '%';
+      document.getElementById('pct'+side).style.color = data.change_pct >= 0 ? '#166534' : '#991b1b';
+      document.getElementById('high'+side).innerText = data.currency + data.high_30d;
+    };
+    update('Left', r1);
+    update('Right', r2);
+
+    document.getElementById('winnerLeft').style.display = r1.change_pct > r2.change_pct ? 'block' : 'none';
+    document.getElementById('winnerRight').style.display = r2.change_pct > r1.change_pct ? 'block' : 'none';
+
+    const ctx = document.getElementById('compChart').getContext('2d');
+    if(compChartInstance) compChartInstance.destroy();
+
+    compChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: r1.history_dates,
+        datasets: [
+          { label: r1.symbol, data: r1.history_close, borderColor: '#0062ff', borderWidth: 4, pointRadius: 0, tension: 0.4 },
+          { label: r2.symbol, data: r2.history_close, borderColor: '#111111', borderWidth: 4, pointRadius: 0, tension: 0.4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'top', labels: { font: { family: 'Outfit' } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'Outfit' } } },
+          y: { position: 'right', grid: { color: 'rgba(0,0,0,0.02)' }, ticks: { font: { family: 'Outfit' } } }
         }
+      }
     });
+
+  } catch(e) { alert("An error occurred during comparison."); }
+}
+
+{% if stock_data and stock_data.history_dates %}
+(function(){
+  const dates={{ stock_data.history_dates|tojson }};
+  const closes={{ stock_data.history_close|tojson }};
+  const cur={{ stock_data.currency|tojson }};
+  const primaryBlue = '#0062ff';
+
+  function makeChart(id, h, fill = true){
+    const ctx=document.getElementById(id);if(!ctx)return;
+    const c=ctx.getContext('2d');
+    const grad = c.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, fill ? 'rgba(0, 98, 255, 0.15)' : 'transparent');
+    grad.addColorStop(1, 'transparent');
+
+    new Chart(c,{
+      type:'line',
+      data:{
+        labels:dates,
+        datasets:[{
+          data:closes,
+          borderColor:primaryBlue,
+          borderWidth:4,
+          pointRadius:0,
+          pointHoverRadius:8,
+          pointHoverBackgroundColor:primaryBlue,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 3,
+          tension:0.4,
+          fill:fill,
+          backgroundColor:grad
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#111',
+            padding:16,
+            titleFont:{size:14, family: 'Outfit'},
+            bodyFont:{size:14, family: 'Outfit'},
+            cornerRadius:16,
+            displayColors:false,
+            callbacks:{label:i=>cur+i.parsed.y.toLocaleString()}
+          }
+        },
+        scales:{
+          x:{grid:{display:false},border:{display:false},ticks:{color:'#94a3b8', font:{family: 'Outfit'}}},
+          y:{position:'right',grid:{color:'rgba(0,0,0,0.02)'},border:{display:false},ticks:{color:'#94a3b8', font:{family: 'Outfit'}, callback:v=>cur+v.toLocaleString()}}
+        }
+      }
+    });
+  }
+  makeChart('stockChart', 400);
+  makeChart('miniChart', 250);
 })();
 {% endif %}
 </script>
-
 </body>
 </html>

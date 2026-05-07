@@ -76,6 +76,38 @@ def index():
     return render_template('index.html', stock_data=stock_data, error=error)
 
 
+@app.route('/api/stock/<symbol>')
+def get_stock_data(symbol):
+    symbol = symbol.strip().upper()
+    try:
+        stock = yf.Ticker(symbol)
+        history = stock.history(period="1mo")
+        if history.empty:
+            return jsonify({'error': 'No data found'}), 404
+        
+        dates = history.index.strftime('%Y-%m-%d').tolist()
+        close_prices = [round(p, 2) for p in history['Close'].tolist()]
+        high_prices = [round(p, 2) for p in history['High'].tolist()]
+        
+        current_price = close_prices[-1]
+        prev_price = close_prices[-2] if len(close_prices) > 1 else current_price
+        price_change = round(current_price - prev_price, 2)
+        change_pct = round((price_change / prev_price) * 100, 2) if prev_price else 0
+        currency = '₹' if symbol.endswith('.NS') or symbol.endswith('.BO') else '$'
+        
+        return jsonify({
+            'symbol': symbol,
+            'price': current_price,
+            'change_pct': change_pct,
+            'currency': currency,
+            'high_30d': round(max(high_prices), 2),
+            'history_dates': dates,
+            'history_close': close_prices
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/suggest')
 def suggest():
     query = request.args.get('q', '').strip().upper()

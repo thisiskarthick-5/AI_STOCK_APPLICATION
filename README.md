@@ -42,6 +42,20 @@
 
 ---
 
+
+## smaples 
+
+### 1. prediction
+<img src = "image1.png">
+
+### 2. compare stocks
+<img src = "image2.png">
+
+### 3. best suggestion
+<img src = "image3.png">
+
+
+
 ## 🚀 Quick Start
 
 ### 1. Prerequisites

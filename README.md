@@ -43,7 +43,7 @@
 ---
 
 
-## smaples 
+## SAMPLES
 
 ### 1. prediction
 <img src = "image1.png">

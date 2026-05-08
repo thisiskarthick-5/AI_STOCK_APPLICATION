@@ -4,6 +4,8 @@
 
 ---
 
+<img src = "image.png">
+
 ## ✨ Key Features
 
 ### 📊 Real-Time Market Intelligence
